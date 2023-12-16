@@ -1,28 +1,23 @@
 # preflight-demo
 
 This app is a demonstration of the preflight pattern for pre-populating initial application state.
-This pattern is useful for setting up application state based on incoming requests as well as passing default state modules may need.
+The preflight file needs to be added at the root of your app folder.
 
 ```bash
 app
 ├── api ............... data routes
-│   └── index.mjs
-├── browser ........... browser JavaScript
-│   └── index.mjs
-├── components ........ single file web components
-│   └── my-card.mjs
-├── elements .......... custom element templates
-│   └── my-header.mjs
-├── pages ............. file-based routing
-│   └── index.html
-├── head.mjs .......... custom <head> component
+│   └── index.mjs ..... override default preflight application state with api data
 └── preflight.mjs ..... pre-populate application state
 
 ```
 
 ## The preflight file
 
-The preflight file is passed the request Object enabling you to update the application state based on the route requested.
+The preflight file is a function that returns a default state object.
+The preflight function is passed the request object enabling you to customize default data per requested route.
+API responses are merged with the default state returned from preflight allowing you to override default state with specific API data per requested route.
+
+> app/preflight.mjs
 
 ```JavaScript
 export default function Preflight ({ req }) {
@@ -31,6 +26,8 @@ export default function Preflight ({ req }) {
 ```
 
 ### Example of setting the page title using preflight
+
+> app/preflight.mjs
 
 ```JavaScript
 export default function Preflight ({ req }) {
@@ -53,3 +50,34 @@ function getPageTitle (path) {
   return titleMap[path] || 'My App Name'
 }
 ```
+
+### Example of overriding default application state from preflight with API response data
+
+> app/preflight.mjs
+
+```JavaScript
+export default function Preflight ({ req }) {
+  return {
+    pageTitle: getPageTitle(req.path),
+    account: {
+      username: 'bobsyouruncle',
+      id: '23jk24h24'
+    }
+  }
+}
+```
+> app/api/index.mjs
+
+```JavaScript
+export async function get() {
+  return {
+    json: {
+      account: {
+        username: 'thisshouldoverride',
+        id: '39nr34n2'
+      }
+    }
+  }
+}
+``
+The account object will be overriden.
