@@ -6,7 +6,7 @@
     "lint": "eslint ./app/**/*.mjs --fix"
   },
   "dependencies": {
-    "@enhance/arc-plugin-enhance": "github:enhance-dev/arc-plugin-enhance#preflight",
+    "@enhance/arc-plugin-enhance": "^9.2.0",
     "@enhance/styles-cribsheet": "^0.0.9"
   },
   "devDependencies": {
