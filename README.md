@@ -21,7 +21,7 @@ API responses are merged with the default state returned from preflight allowing
 
 ```JavaScript
 export default function Preflight ({ req }) {
-  return { //...Your data here }
+  return { /*...Your data here */ }
 }
 ```
 
