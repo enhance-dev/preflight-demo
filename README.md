@@ -1,83 +1,116 @@
 # preflight-demo
 
-This app is a demonstration of the preflight pattern for pre-populating initial application state.
-The preflight file needs to be added at the root of your app folder.
+The purpose of the preflight file is to populate the server-side store with default application state.
+The preflight function is passed the request object enabling you to populate the server-side store with customized data per route.
+
+You can use the preflight file as a way to incrementally build your data layer. Start with a static version of your store data to get everything working then progress to using API functions and a database as needed.
+
+Preflight can also work as a global middleware replacement for pages that require data in common with other pages that otherwise would not require an API route. A typical pattern that can be solved with preflight is needing authenticated account data on multiple pages without writing an API endpoint for each page.
+
+Enhance looks for the preflight file in the root of your app.
 
 ```bash
 app
 ├── api ............... data routes
 │   └── index.mjs ..... override default preflight application state with api data
-└── preflight.mjs ..... pre-populate application state
+├── preflight.mjs ..... pre-populate server-side store
+└── head.mjs .......... custom <head> component
 
 ```
 
-## The preflight file
+The preflight function is passed the request object enabling you to customize data per requested route.
+API responses are merged with the default state returned from preflight allowing you to override default state with specific API data per request.
 
-The preflight file is a function that returns a default state object.
-The preflight function is passed the request object enabling you to customize default data per requested route.
-API responses are merged with the default state returned from preflight allowing you to override default state with specific API data per requested route.
+### Basic example
+
+`app/preflight.mjs`
+
+```javascript
+  export default async function Preflight ({ req }) {
+    return { /* ...Your data here */ }
+  }
+```
+
+
+### Setting the page title using preflight
 
 > app/preflight.mjs
 
-```JavaScript
-export default function Preflight ({ req }) {
-  return { /*...Your data here */ }
-}
-```
-
-### Example of setting the page title using preflight
-
-> app/preflight.mjs
-
-```JavaScript
-export default function Preflight ({ req }) {
-  return {
-    pageTitle: getPageTitle(req.path),
-    account: {
-      username: 'bobsyouruncle',
-      id: '23jk24h24'
-    }
-  }
-}
-
-function getPageTitle (path) {
-  const titleMap = {
-    '/': 'Home',
-    '/about': 'About',
-    '/account': 'My Account'
-  }
-
-  return titleMap[path] || 'My App Name'
-}
-```
-
-### Example of overriding default application state from preflight with API response data
-
-> app/preflight.mjs
-
-```JavaScript
-export default function Preflight ({ req }) {
-  return {
-    pageTitle: getPageTitle(req.path),
-    account: {
-      username: 'bobsyouruncle',
-      id: '23jk24h24'
-    }
-  }
-}
-```
-> app/api/index.mjs
-
-```JavaScript
-export async function get() {
-  return {
-    json: {
+  ```javascript
+  export default async function Preflight ({ req }) {
+    return {
+      pageTitle: getPageTitle(req.path),
       account: {
-        username: 'thisshouldoverride',
-        id: '39nr34n2'
+        username: 'bobsyouruncle',
+        id: '23jk24h24'
       }
     }
   }
-}
+
+  function getPageTitle (path) {
+    const titleMap = {
+      '/': 'Home',
+      '/about': 'About',
+      '/account': 'My Account'
+    }
+
+    return titleMap[path] || 'My App Name'
+  }
 ```
-The account object will be overriden.
+
+### Access the page title from the store
+
+The data object you return from preflight will be available to your elements and the `head.mjs` file via the `state.store`
+
+`app/head.mjs`
+
+  ```javascript
+    export default function Head(state) {
+      const { store = {} } = state
+      const { pageTitle = 'Enhance Starter Project' } = store
+      return `
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1">
+          <title>${pageTitle}</title>
+        </head>
+        <body class="font-sans">
+      `
+    }
+  ```
+
+
+### Overriding default preflight data with an API response
+
+`app/preflight.mjs`
+
+  ```javascript
+  export default async function Preflight ({ req }) {
+    return {
+      pageTitle: getPageTitle(req.path),
+      account: {
+        username: 'bobsyouruncle',
+        id: '23jk24h24'
+      }
+    }
+  }
+```
+
+`app/api/index.mjs`
+
+  ```javascript
+  export async function get() {
+    return {
+      json: {
+        account: {
+          username: 'thisshouldoverride',
+          id: '39nr34n2'
+        }
+      }
+    }
+  }
+```
+
+The account object will be overridden by the API response.
